@@ -1,0 +1,379 @@
+openapi: 3.0.0
+info:
+  title: "Sales Management API"
+  version: "1.0.0"
+  description: "Sales Management API with nodeJS, express and mysql"
+servers:
+  - url: "http://localhost:6000"
+    description: "local server"
+components:
+  securitySchemes:
+    bearer:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: "Enter the token with the word Bearer and a space before it e.g. Bearer xxxxxxxx"
+  schemas:
+    UserRegisterRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          pattern: '^[^\s]+$'
+          example: "username"
+        role:
+          type: string
+          enum:
+            - "admin"
+            - "sales"
+        password:
+          type: string
+          minLength: 8
+          pattern: '^(?=.*[a-zA-Z])(?=.*\d)[a-zA-Z\d]+$'
+      required:
+        - username
+        - password
+        - role
+    UserResponse:
+      type: object
+      properties:
+        id:
+          type: number
+        username:
+          type: string
+        role:
+          type: string
+          enum:
+            - "admin"
+            - "sales"
+        message:
+          type: string
+    UserLoginRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          pattern: '^[^\s]+$'
+          example: "username"
+        password:
+          type: string
+          format: password
+          minLength: 8
+      required:
+        - "username"
+        - "password"
+    CreateUser:
+      type: object
+      properties:
+        name:
+          type: string
+        role:
+          type: string
+          enum:
+            - "admin"
+            - "sales"
+        target:
+          type: number
+    AllUserResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/CreateUser"
+    UserUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        role:
+          type: string
+          enum:
+            - "admin"
+            - "sales"
+        target:
+          type: number
+    CreateSellout:
+      type: object
+      properties:
+        user_id:
+          type: number
+        sku:
+          type: string
+        quantity:
+          type: number
+        amount:
+          type: number
+    AllSelloutResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/CreateSellout"
+    SelloutUpdate:
+      type: object
+      properties:
+        user_id:
+          type: number
+        sku:
+          type: string
+        quantity:
+          type: number
+        amount:
+          type: number
+paths:
+  /auth/register:
+    post:
+      tags:
+        - "user"
+      summary: "Register a new user"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserRegisterRequest"
+      responses:
+        "201":
+          description: "User Created successfully"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+        "400":
+          description: "Invalid Request"
+        "409":
+          description: "User Already Exists"
+  /auth/login:
+    post:
+      tags:
+        - "User"
+      summary: "Login"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserLoginRequest"
+      responses:
+        "200":
+          description: "User Loged In"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+        "400":
+          description: "Invalid Request"
+  /user:
+    get:
+      security:
+        - bearer: []
+      tags:
+        - "Get All Users"
+      summary: "Get All User"
+      responses:
+        "200":
+          description: "User Retrieved"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AllUserResponse"
+        "401":
+          description: "Unautorized"
+    post:
+      security:
+        - bearer: []
+      tags:
+        - "Create User"
+      summary: "Create User"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateUser"
+      responses:
+        "201":
+          description: "Create successfully"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateUser"
+        "400":
+          description: "invalid Request"
+        "401":
+          description: "Anauthorized"
+  /user/{id}:
+    get:
+      security:
+        - bearer: []
+      tags:
+        - "Get User Data"
+      summary: "Get a User Data"
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: "Get User id"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AllUserResponse"
+      responses:
+        "200":
+          description: "Invalid Request"
+        "401":
+          description: "Unautorized"
+    put:
+      security:
+        - bearer: []
+      tags:
+        - "Update User Data"
+      summary: "Update a User Data"
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: "Update User Id"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserUpdate"
+      responses:
+        "200":
+          description: "Invalid Request"
+        "401":
+          description: "Unautorized"
+    delete:
+      security:
+        - bearer: []
+      tags:
+        - "Delete User"
+      summary: "Delete a User Data"
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: "User Deleted"
+      responses:
+        "204":
+          description: "Delete User successfully"
+        "400":
+          description: "Invalid Request"
+        "401":
+          description: "Unauthorized"
+  /sellout:
+    get:
+      security:
+        - bearer: []
+      tags:
+        - "Sellout Input"
+      summary: "Get All Sellout"
+      responses:
+        "200":
+          description: "Sellout Input Retrieved"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AllSelloutResponse"
+        "401":
+          description: "Unautorized"
+    post:
+      security:
+        - bearer: []
+      tags:
+        - "Sellout Input"
+      summary: "Create Sellout Input"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSellout"
+      responses:
+        "201":
+          description: "Sellout Input successfully"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateSellout"
+        "400":
+          description: "invalid Request"
+        "401":
+          description: "Anauthorized"
+  /sellout/{id}:
+    get:
+      security:
+        - bearer: []
+      tags:
+        - "Get Sellout Input"
+      summary: "Get a Sellout Input"
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: "Get Sellout id"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AllSelloutResponse"
+      responses:
+        "200":
+          description: "Invalid Request"
+        "401":
+          description: "Unautorized"
+    put:
+      security:
+        - bearer: []
+      tags:
+        - "Update Sellout Input"
+      summary: "Update a Sellout Input"
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: "Update Sellout id"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SelloutUpdate"
+      responses:
+        "200":
+          description: "Invalid Request"
+        "401":
+          description: "Unautorized"
+    delete:
+      security:
+        - bearer: []
+      tags:
+        - "Delete Sellout"
+      summary: "Delete a Sellout Input"
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: "Sellout Deleted"
+      responses:
+        "204":
+          description: "Delete Sellout successfully"
+        "400":
+          description: "Invalid Request"
+        "401":
+          description: "Unauthorized"
