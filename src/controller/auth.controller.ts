@@ -52,6 +52,11 @@ const userRegister = async (
   }
 };
 
+const loginAttempts = new Map<string, number>();
+
+const maxLoginAttempts = 5;
+const lockoutDuration = 15 * 60 * 1000; 
+
 const loginUser = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { password, username } = req.body;
@@ -59,7 +64,14 @@ const loginUser = async (req: Request, res: Response, next: NextFunction) => {
     if (!username || !password) {
       return res.status(400).json({
         success: false,
-        message: "Username and password are required fields",
+        message: 'Username and password are required fields',
+      });
+    }
+
+    if (loginAttempts.has(username) && loginAttempts.get(username)! >= maxLoginAttempts) {
+      return res.status(429).json({
+        success: false,
+        message: 'Too many login attempts. Please try again later.',
       });
     }
 
@@ -67,58 +79,75 @@ const loginUser = async (req: Request, res: Response, next: NextFunction) => {
     const [queryResult]: any = await db.query(getUserQuery);
 
     if (queryResult.length === 0) {
+      const attempts = loginAttempts.get(username) || 0;
+      loginAttempts.set(username, attempts + 1);
+
+      setTimeout(() => {
+        loginAttempts.delete(username);
+      }, lockoutDuration);
+
       return res.status(401).json({
         success: false,
-        message: "Invalid username or password",
+        message: 'Invalid username or password',
       });
     }
 
-    // Extract user data from the query result
     const userData = queryResult[0];
-
-    // Verify the password using bcrypt
     const isPasswordValid = await bcrypt.compare(password, userData.password);
 
     if (!isPasswordValid) {
+      const attempts = loginAttempts.get(username) || 0;
+      loginAttempts.set(username, attempts + 1);
+
+      setTimeout(() => {
+        loginAttempts.delete(username);
+      }, lockoutDuration);
+
       return res.status(401).json({
         success: false,
-        message: "Invalid username or password",
+        message: 'Invalid username or password',
       });
     }
 
-    // Create an access token with a short expiration time (e.g., 15 minutes)
+    loginAttempts.delete(username);
+
     const accessToken = jwt.sign(
       { id: userData.id, username: userData.username, role: userData.role },
       secretKey,
       { expiresIn: '15m' }
     );
-
-    // Create a refresh token with a longer expiration time (e.g., 7 days)
     const refreshToken = jwt.sign(
       { id: userData.id },
       refreshSecretKey,
       { expiresIn: '7d' }
     );
 
-    // Calculate the access token's expiration time in seconds
-    const accessTokenExpiresIn = 15 * 60; // 15 minutes in seconds
+    res.cookie('access_token', accessToken, { httpOnly: true, maxAge: 15 * 60 * 1000 });
+    res.cookie('refresh_token', refreshToken, { httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000 });
 
     res.status(200).json({
       success: true,
-      message: "Login successful",
-      accessToken,
-      refreshToken,
-      accessTokenExpiresIn,
+      message: 'Login successful',
     });
   } catch (error) {
-    console.error("Error during login:", error);
+    console.error('Error during login:', error);
     res.status(500).json({
       success: false,
-      message: "Login failed",
-      error: error instanceof Error ? error.message : "An unknown error occurred",
+      message: 'Login failed',
+      error: error instanceof Error ? error.message : 'An unknown error occurred',
     });
   }
 };
 
-const authController = { userRegister, loginUser };
+
+const logoutUser = (req: Request, res: Response) => {
+
+  res.clearCookie('access_token');
+  res.clearCookie('refresh_token');
+
+  res.json({ success: true, message: 'Logged out successfully' });
+};
+
+
+const authController = { userRegister, loginUser, logoutUser };
 export default authController;

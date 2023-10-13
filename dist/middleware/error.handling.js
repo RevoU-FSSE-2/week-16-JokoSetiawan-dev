@@ -1,6 +1,5 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-// Define a custom error class that extends Error
 class CustomError extends Error {
     status;
     errors;

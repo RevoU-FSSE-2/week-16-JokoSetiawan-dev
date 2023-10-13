@@ -1,7 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 
-// Define a custom Request interface with a role property
 interface CustomRequest extends Request {
     role?: string;
 }

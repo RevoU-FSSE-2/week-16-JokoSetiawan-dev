@@ -1,6 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
 
-// Define a custom error class that extends Error
 class CustomError extends Error {
   status: number;
   errors?: any;
