@@ -8,6 +8,7 @@ dotenv.config();
 
 const saltRounds = 10;
 const secretKey = process.env.SECRET_KEY || "default-secret-key";
+const refreshSecretKey = process.env.REFRESH_KEY || "default-refresh-key";
 
 const userRegister = async (
   req: Request,
@@ -32,7 +33,7 @@ const userRegister = async (
       [username, hashedPassword, role]
     );
 
-    const id = 123; // Replace with the actual user ID from the database
+    const id = 123;
 
     const token = jwt.sign({ id, username, role }, secretKey, {
       expiresIn: "1h",
@@ -62,7 +63,6 @@ const loginUser = async (req: Request, res: Response, next: NextFunction) => {
       });
     }
 
-    // Retrieve the user from the database by username
     const getUserQuery = `SELECT * FROM sellout_tracking.auth_table WHERE username = '${username}'`;
     const [queryResult]: any = await db.query(getUserQuery);
 
@@ -86,24 +86,36 @@ const loginUser = async (req: Request, res: Response, next: NextFunction) => {
       });
     }
 
-    const token = jwt.sign(
+    // Create an access token with a short expiration time (e.g., 15 minutes)
+    const accessToken = jwt.sign(
       { id: userData.id, username: userData.username, role: userData.role },
       secretKey,
-      { expiresIn: "1h" }
+      { expiresIn: '15m' }
     );
+
+    // Create a refresh token with a longer expiration time (e.g., 7 days)
+    const refreshToken = jwt.sign(
+      { id: userData.id },
+      refreshSecretKey,
+      { expiresIn: '7d' }
+    );
+
+    // Calculate the access token's expiration time in seconds
+    const accessTokenExpiresIn = 15 * 60; // 15 minutes in seconds
 
     res.status(200).json({
       success: true,
       message: "Login successful",
-      token,
+      accessToken,
+      refreshToken,
+      accessTokenExpiresIn,
     });
   } catch (error) {
     console.error("Error during login:", error);
     res.status(500).json({
       success: false,
       message: "Login failed",
-      error:
-        error instanceof Error ? error.message : "An unknown error occurred",
+      error: error instanceof Error ? error.message : "An unknown error occurred",
     });
   }
 };

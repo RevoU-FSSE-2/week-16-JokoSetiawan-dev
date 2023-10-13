@@ -10,12 +10,7 @@ CREATE TABLE user_table (
     gap INT NOT NULL
 );
 
-
-INSERT INTO user_table (name, role, target, achivement, gap)
-VALUES
-('Rafi', 'sales' '100000000', '100000000', '0');
-
-USE sellout_table;
+USE sellout_tracking;
 
 CREATE TABLE sellout_table (
     id INT PRIMARY KEY AUTO_INCREMENT,
@@ -24,8 +19,3 @@ CREATE TABLE sellout_table (
     quantity INT NOT NULL,
     amount INT NOT NULL
 );
-
-
-INSERT INTO sellout_table (user_id, sku, quantity, amount)
-VALUES
-(1, '32t4500', 1, 2000000),
