@@ -128,6 +128,7 @@ const loginUser = async (req: Request, res: Response, next: NextFunction) => {
     res.status(200).json({
       success: true,
       message: 'Login successful',
+      cookies: accessToken, refreshToken
     });
   } catch (error) {
     console.error('Error during login:', error);

@@ -5,6 +5,7 @@ import { db } from "./config/db.connection";
 import userRoutes from "./routes/user.route";
 import selloutRoutes from "./routes/sellout.route";
 import authRoutes from "./routes/auth.route";
+import resetPasswordRoutes from "./routes/resetPassword.route";
 import {
   authenticationMiddleware,
   authorizationMiddleware,
@@ -31,6 +32,7 @@ app.use(routes);
 routes.use("/auth", authRoutes);
 routes.use("/user", authenticationMiddleware, userRoutes);
 routes.use("/sellout", authenticationMiddleware, selloutRoutes);
+routes.use("/password", resetPasswordRoutes);
 
 app.use(errorHandlerMiddleware);
 

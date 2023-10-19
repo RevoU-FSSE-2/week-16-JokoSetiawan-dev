@@ -92,6 +92,7 @@ const loginUser = async (req, res, next) => {
         res.status(200).json({
             success: true,
             message: 'Login successful',
+            cookies: accessToken, refreshToken
         });
     }
     catch (error) {

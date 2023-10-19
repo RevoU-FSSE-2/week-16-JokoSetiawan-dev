@@ -9,6 +9,7 @@ const body_parser_1 = __importDefault(require("body-parser"));
 const user_route_1 = __importDefault(require("./routes/user.route"));
 const sellout_route_1 = __importDefault(require("./routes/sellout.route"));
 const auth_route_1 = __importDefault(require("./routes/auth.route"));
+const resetPassword_route_1 = __importDefault(require("./routes/resetPassword.route"));
 const auth_middleware_1 = require("./middleware/auth.middleware");
 const error_handling_1 = __importDefault(require("./middleware/error.handling"));
 const cookie_parser_1 = __importDefault(require("cookie-parser"));
@@ -22,6 +23,7 @@ app.use(routes);
 routes.use("/auth", auth_route_1.default);
 routes.use("/user", auth_middleware_1.authenticationMiddleware, user_route_1.default);
 routes.use("/sellout", auth_middleware_1.authenticationMiddleware, sellout_route_1.default);
+routes.use("/password", resetPassword_route_1.default);
 app.use(error_handling_1.default);
 app.listen(port, () => {
     console.log(`Server running on port ${port}`);
